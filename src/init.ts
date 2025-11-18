@@ -4,6 +4,7 @@ import {
   ChatService,
   MemoryService,
   EmbeddingsService,
+  CalendarService,
   ChatHistoryService,
 } from "./modules";
 
@@ -13,5 +14,6 @@ export async function init() {
   RagService.init();
   MemoryService.init();
   ChatHistoryService.init();
+  CalendarService.init();
   await ChatService.init();
 }

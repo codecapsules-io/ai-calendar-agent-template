@@ -15,7 +15,7 @@ function loadEnvVar<T>(key: string, defaultValue: T): T {
 export const config = {
   // app configuration
   appUrl: loadEnvVar("APP_URL", "localhost:3000"),
-  appName: loadEnvVar("APP_NAME", "telegram-bot"),
+  appName: loadEnvVar("APP_NAME", "my-agentic-app"),
   port: loadEnvVar("PORT", 3000),
 
   // development configuration
@@ -32,4 +32,9 @@ export const config = {
   providerApiKey: loadEnvVar("PROVIDER_API_KEY", ""),
   providerName: loadEnvVar("PROVIDER_NAME", "google-genai"),
   providerModel: loadEnvVar("PROVIDER_MODEL", "gemini-2.5-flash"),
+
+  // google calendar configuration
+  googleCalendarClientId: loadEnvVar("GOOGLE_CALENDAR_CLIENT_ID", ""),
+  googleCalendarSecret: loadEnvVar("GOOGLE_CALENDAR_CLIENT_SECRET", ""),
+
 };

@@ -5,22 +5,38 @@
 </div>
 <br/>
 
-# Code Capsules Base Agent
+<div align="center">
+  <a href="https://codecapsules.io/">
+    <img src="https://cdn.prod.website-files.com/67ceb2cb686dbb71573b4e01/67cebcb49209deccb991799d_Code%20Capsules%20-%20Logo%201.svg" alt="Code Capsules Logo" width="400"/>
+  </a>
+</div>
+<br/>
 
-An Express API that exposes a Base AI Agent. Built with TypeScript and LangChain.
+# Code Capsules Calendar Agent
+
+An Express API that exposes a Calendar AI Agent. Built with TypeScript and LangChain with Google Calendar integration.
 
 ## Overview
 
-This API provides a LangChain-based Base Agent with RAG (Retrieval-Augmented Generation) capabilities. It allows for the use of a Redis vector store and supports streaming responses for real-time chat interactions.
+This API provides a LangChain-based Calendar Agent with RAG (Retrieval-Augmented Generation) capabilities. The agent can manage Google Calendar events through natural language conversations, supporting event creation, retrieval, and authorization. It allows for the use of a Redis vector store and supports streaming responses for real-time chat interactions.
 
 ### Key topics:
 
 - [Features](#features)
-- [Setting up with Code Capsules](#setup)
+- [Setting up with Code Capsules and Google Calendar](#setup)
 - [Setting up a Vector Store](#vector-store-setup-redis)
 - [Customisation](#customization)
 
 ## Features
+
+### Natural Language Calendar Management
+
+The agent understands and processes natural language requests for calendar operations:
+
+- **Event Creation**: Add events with natural language descriptions
+- **Event Retrieval**: Query events by date range using natural language
+- **Date Recognition**: "tomorrow", "next week", "this weekend", "December 5"
+- **Time Handling**: Defaults to midnight (00:00) if no time specified
 
 ### RAG (Retrieval-Augmented Generation)
 
@@ -60,7 +76,21 @@ To create your own Agent Capsule in Code Capsules with this functionaity:
 2. Create an AI Agent Capsule
 3. Link your new repo to the capsule
 4. Mark the capsule as 'using a Code Capsules template' and enter your provider, model, and API key details
-5. Finish the setup and wait for the capsule to build
+5. Finish the setup and wait for the capsule to build. Note that your calendar integration will not work until you have completed the [Configure Google Calendar](#configure-google-calendar) steps below
+
+### Configure Google Calendar
+
+To set up Google Calendar integration:
+
+1. Follow the instructions [here](https://developers.google.com/workspace/calendar/api/quickstart/js) to set up your Google cloud project and enable the Google Calendar API. Ensure to keep your Web Application client secret and key somewhere safe
+2. Edit your Agent Capsule environment variables and add the following, replacing the values where necessary:
+
+```bash
+GOOGLE_CALENDAR_CLIENT_ID=your_client_id
+GOOGLE_CALENDAR_CLIENT_SECRET=your_client_secret
+```
+
+3. Use the 'Chat' tab to talk with your new agent
 
 ## Vector Store Setup (Redis)
 
@@ -98,19 +128,14 @@ REDIS_URL=your_redis_instance_url
 
 ## Architecture
 
-### Diagram
-
-<img src="docs/architecture.svg" width="700px" alt="Architecture" />
-
-- **Vector Store**: Makes use of Redis as a vector database or a fallback Memory vector store to facilitate RAG functionality.
-- **History**: Non-persistent Redis or In-Memory store. Can be easily expanded to be persistent.
-- **Embeddings**: Uses Hugging Face Transformers embeddings model to embed text into a vector space locally.
-- **Agent**: The core LangChain agent that handles the chat logic.
-- **API**: API exposed via Express.js.
+- **Database**: None (stateless)
+- **Vector Store**: Redis (required for RAG functionality)
+- **LLM Provider**: Google Generative AI (configurable via environment variables)
+- **Calendar Integration**: Google Calendar API with OAuth 2.0
 
 ## Agent Tools
 
-The Base Agent has access to the following tools:
+The Calendar Agent has access to the following tools:
 
 ### 1. **retrieve**
 
@@ -118,6 +143,40 @@ The Base Agent has access to the following tools:
 - **Description**: Performs similarity search in the Redis vector store to find relevant documents
 - **Input**: Query string
 - **Output**: Retrieved documents with source metadata and content
+
+### 2. **getDate**
+
+- **Purpose**: Get the current date and time
+- **Description**: Returns today's date in ISO format to help the agent interpret relative date expressions
+- **Input**: None
+- **Output**: Current date/time in ISO format
+
+### 3. **getCalendarEvents**
+
+- **Purpose**: Retrieve user's Google Calendar events
+- **Description**: Fetches events from the user's calendar within a specified date range
+- **Input**:
+  - `startDate` (string): Start date for event retrieval (supports natural language like "today", "tomorrow", "next week")
+  - `endDate` (string): End date for event retrieval
+- **Output**: List of events with summary, start time, and end time
+
+### 4. **addCalendarEvent**
+
+- **Purpose**: Create a new event in the user's Google Calendar
+- **Description**: Adds a new calendar event with specified details
+- **Input**:
+  - `summary` (string): Event title/summary
+  - `description` (string): Event description
+  - `start` (string): Start date and time in ISO format
+  - `end` (string): End date and time in ISO format
+- **Output**: Confirmation message with event details
+
+### 5. **requestCalendarAuth**
+
+- **Purpose**: Initiate Google Calendar authorization
+- **Description**: Generates an OAuth URL for the user to authorize calendar access
+- **Input**: None (uses user ID from config)
+- **Output**: Authorization URL for the user to visit
 
 ## Installation
 
@@ -130,9 +189,7 @@ npm install
 For local testing, create a `.env` file:
 
 ```bash
-
 # App Configuration
-
 PORT=3000
 APP_URL=localhost:3000
 APP_NAME=my-agent
@@ -147,12 +204,16 @@ PROVIDER_API_KEY=your-google-api-key
 PROVIDER_NAME=google-genai
 PROVIDER_MODEL=gemini-2.0-flash
 
+# Google Calendar Integration (Required for calendar features)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/calendar/auth/callback
+
 # Vector Store (Optional, but recommended)
 REDIS_URL=redis://localhost:6379
 
 # Host documentation (Optional)
 SHOW_DOCUMENTATION=true
-
 
 ```
 
@@ -186,6 +247,30 @@ npm start
 
 ### Context (RAG)
 
+- `POST /api/context/text` - Add text context to vector store
+
+  - **Body**: `{ text: string }`
+  - **Response**: Confirmation of context addition
+  - **Auth**: Required (`X-CC-API-KEY`, `X-CC-EMAIL`)
+
+- `POST /api/context/url` - Add context from URL to vector store
+  - **Body**: `{ url: string }`
+  - **Response**: Confirmation of context addition
+  - **Auth**: Required (`X-CC-API-KEY`, `X-CC-EMAIL`)
+
+### Calendar
+
+- `GET /api/calendar/auth` - Get Google Calendar authorization URL
+
+  - **Response**: `{ url: string }`
+  - **Auth**: Required (`X-CC-API-KEY`, `X-CC-EMAIL`)
+
+- `GET /api/calendar/auth/callback` - OAuth callback endpoint for Google Calendar
+
+  - **Query Params**: `code` (from Google), `state` (user ID)
+  - **Response**: `{ message: "Token saved" }`
+  - **Auth**: Not required (OAuth flow)
+
 - `POST /api/rag/text` - Add text context to vector store
 
   - **Body**: `{ text: string }`
@@ -197,7 +282,7 @@ npm start
   - **Response**: Confirmation of context addition
   - **Auth**: Required (`X-CC-API-KEY`, `X-CC-EMAIL`)
 
-### Documentation (only visible if `SHOW_DOCUMENTATION` env var is set to `true`)
+### Documentation
 
 - `GET /api-docs` - Swagger UI (public, no auth required)
 - `GET /swagger.json` - Swagger JSON (public, no auth required)
@@ -225,7 +310,7 @@ Supported providers include:
 
 ### Modify System Prompt
 
-Update `src/modules/agent/config/system-prompt.ts` to change agent behavior, personality, or instructions. When using Code Capsules, be sure to ensure that the Agent Capsule is rebuilt and deployed to see your changes.
+Update `src/modules/agent/config/system-prompt.ts` to change agent behavior, personality, or instructions. The current prompt is configured for calendar management with natural language date parsing. When using Code Capsules, be sure to ensure that the Agent Capsule is rebuilt and deployed to see your changes.
 
 ### Add or Remove Tools
 
@@ -251,6 +336,9 @@ The RAG module currently uses Redis or an in-memory vector store. To switch to a
 - **Runtime**: Node.js + TypeScript
 - **Framework**: Express 5
 - **LLM Framework**: LangChain
+- **LLM Provider**: Google Generative AI (configurable)
+- **Vector Store**: Redis (for RAG)
+- **Calendar Integration**: Google Calendar API with OAuth 2.0
 - **LLM Provider**: Google Generative AI
 - **Vector Store**: Redis (or Memory for fallback)
 - **Documentation**: Swagger/OpenAPI
@@ -259,4 +347,7 @@ The RAG module currently uses Redis or an in-memory vector store. To switch to a
 
 - CORS is enabled for all origins (`*`)
 - Request size limit: 10MB
+- All `/api/*` routes require authentication (except `/api/calendar/auth/callback` and `/api-docs`)
 - Swagger docs are publicly accessible at `/api-docs`
+- Calendar tokens are stored in memory (consider persistent storage for production)
+- The agent uses natural language date parsing for calendar operations (e.g., "tomorrow", "next week")

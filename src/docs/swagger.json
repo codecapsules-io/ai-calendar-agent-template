@@ -19,6 +19,10 @@
     {
       "name": "Context",
       "description": "Context endpoints for managing RAG (Retrieval-Augmented Generation) context"
+    },
+    {
+      "name": "Calendar",
+      "description": "Calendar endpoints for Google Calendar integration and authentication"
     }
   ],
   "paths": {
@@ -342,6 +346,114 @@
           }
         }
       }
+    },
+    "/api/calendar/auth": {
+      "get": {
+        "tags": ["Calendar"],
+        "summary": "Get Google Calendar authentication URL",
+        "description": "Retrieve the Google OAuth authentication URL for the authenticated user. This URL should be used to initiate the OAuth flow for Google Calendar access.",
+        "operationId": "getCalendarAuthUrl",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "EmailAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authentication URL retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAuthUrlResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - User not authenticated or missing user information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calendar/auth/callback": {
+      "get": {
+        "tags": ["Calendar"],
+        "summary": "Handle Google Calendar OAuth callback",
+        "description": "Handle the OAuth callback from Google Calendar authentication. This endpoint processes the authorization code and saves the access token for the user.",
+        "operationId": "saveCalendarToken",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "description": "The authorization code returned by Google OAuth",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "description": "The state parameter containing the user ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing required query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -627,6 +739,105 @@
             "type": "string",
             "description": "The error message",
             "example": "Internal Server Error"
+          }
+        }
+      },
+      "ChatResponseChunk": {
+        "type": "object",
+        "required": ["chunk"],
+        "description": "A chunk of streaming response data",
+        "properties": {
+          "chunk": {
+            "type": "string",
+            "description": "The chunk content",
+            "example": "Hello"
+          }
+        }
+      },
+      "AgentMessageChunk": {
+        "type": "object",
+        "required": ["role", "chunk"],
+        "description": "A chunk of an agent message in a streaming response",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant"],
+            "description": "The role of the message sender"
+          },
+          "chunk": {
+            "type": "string",
+            "description": "The chunk content",
+            "example": "Hello"
+          }
+        }
+      },
+      "AgentStreamChunkResponse": {
+        "type": "object",
+        "required": ["contentBlocks"],
+        "description": "Response structure for agent stream chunks",
+        "properties": {
+          "contentBlocks": {
+            "type": "array",
+            "description": "Array of content blocks in the stream chunk",
+            "items": {
+              "type": "object",
+              "required": ["type", "text"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The type of content block"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "The text content"
+                }
+              }
+            }
+          }
+        }
+      },
+      "GetAuthUrlResponse": {
+        "type": "object",
+        "required": ["data", "success"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["url"],
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "The Google OAuth authentication URL",
+                "example": "https://accounts.google.com/o/oauth2/v2/auth?..."
+              }
+            }
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always true.",
+            "example": true
+          }
+        }
+      },
+      "SaveTokenResponse": {
+        "type": "object",
+        "required": ["data", "success"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["message"],
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Success message",
+                "example": "Token saved"
+              }
+            }
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always true.",
+            "example": true
           }
         }
       }
