@@ -1,0 +1,635 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Code Capsules Agent API",
+    "version": "1.0.0",
+    "description": "API documentation for the Code Capsules Agent service"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Chat",
+      "description": "Chat endpoints for interacting with the AI agent"
+    },
+    {
+      "name": "Context",
+      "description": "Context endpoints for managing RAG (Retrieval-Augmented Generation) context"
+    }
+  ],
+  "paths": {
+    "/api/chat/message": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Send a message to the AI agent",
+        "description": "Send a message to the conversational AI agent and receive a complete response. For streaming responses, use the /message/stream endpoint instead.",
+        "operationId": "sendMessage",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "EmailAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatPrompt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response from the AI agent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendMessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Message content is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication headers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/message/stream": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Stream a message from the AI agent",
+        "description": "Send a message to the conversational AI agent and receive a streaming response. The response is sent as Server-Sent Events (SSE) with each chunk containing the type and content.",
+        "operationId": "streamMessage",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "EmailAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatPrompt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful streaming response from the AI agent",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events stream containing message chunks"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Message is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication headers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/history": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get chat history for the authenticated user",
+        "description": "Retrieve the complete chat history for the currently authenticated user, including all previous conversations.",
+        "operationId": "getChatHistory",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "EmailAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetChatHistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - User not authenticated or missing user information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/context/text": {
+      "post": {
+        "tags": ["Context"],
+        "summary": "Add text context to the vector store",
+        "description": "Add text content to the vector store for use in RAG (Retrieval-Augmented Generation) context retrieval.",
+        "operationId": "addContextText",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "EmailAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContextText"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Context added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddContextTextResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Context text is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication headers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/context/url": {
+      "post": {
+        "tags": ["Context"],
+        "summary": "Add context from URL to the vector store",
+        "description": "Fetch content from a URL and add it to the vector store for use in RAG (Retrieval-Augmented Generation) context retrieval.",
+        "operationId": "addContextFromUrl",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "EmailAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContextUrl"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Context added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddContextFromUrlResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - URL is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication headers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CC-API-KEY",
+        "description": "API key for authentication"
+      },
+      "EmailAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CC-EMAIL",
+        "description": "Email for user identification (used with API key)"
+      }
+    },
+    "schemas": {
+      "ChatPrompt": {
+        "type": "object",
+        "required": ["content", "date"],
+        "properties": {
+          "content": {
+            "type": "array",
+            "description": "Array of message content blocks (text, images, or files)",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ChatPromptContentText"
+                },
+                {
+                  "$ref": "#/components/schemas/ChatPromptContentImage"
+                },
+                {
+                  "$ref": "#/components/schemas/ChatPromptContentFile"
+                }
+              ]
+            }
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the message",
+            "example": "2025-11-07T10:30:00Z"
+          }
+        }
+      },
+      "AgentMessage": {
+        "type": "object",
+        "required": ["role", "content", "date"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant"],
+            "description": "The role of the message sender"
+          },
+          "content": {
+            "type": "array",
+            "description": "Array of message content blocks",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AgentMessageContentText"
+                },
+                {
+                  "$ref": "#/components/schemas/AgentMessageContentImage"
+                },
+                {
+                  "$ref": "#/components/schemas/AgentMessageContentFile"
+                }
+              ]
+            }
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the message"
+          }
+        }
+      },
+      "ChatPromptContentText": {
+        "type": "object",
+        "required": ["type", "text"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text"],
+            "description": "The type of content block"
+          },
+          "text": {
+            "type": "string",
+            "description": "The text content",
+            "example": "Hello there"
+          }
+        }
+      },
+      "ChatPromptContentImage": {
+        "type": "object",
+        "required": ["type", "name", "base64"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["image"],
+            "description": "The type of content block"
+          },
+          "name": {
+            "type": "string",
+            "description": "The filename of the image",
+            "example": "photo.jpg"
+          },
+          "base64": {
+            "type": "string",
+            "description": "Base64 encoded image data",
+            "example": "iVBORw0KGgo...=="
+          }
+        }
+      },
+      "ChatPromptContentFile": {
+        "type": "object",
+        "required": ["type", "name", "base64"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["file"],
+            "description": "The type of content block"
+          },
+          "name": {
+            "type": "string",
+            "description": "The filename",
+            "example": "document.pdf"
+          },
+          "base64": {
+            "type": "string",
+            "description": "Base64 encoded file data",
+            "example": "JVBERi0xLjQKJeLjz9MK...=="
+          }
+        }
+      },
+      "AgentMessageContentText": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text content",
+            "example": "Hello there"
+          }
+        }
+      },
+      "AgentMessageContentImage": {
+        "type": "object",
+        "required": ["name", "base64"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The filename of the image",
+            "example": "photo.jpg"
+          },
+          "base64": {
+            "type": "string",
+            "description": "Base64 encoded image data",
+            "example": "iVBORw0KGgo...=="
+          }
+        }
+      },
+      "AgentMessageContentFile": {
+        "type": "object",
+        "required": ["name", "base64"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The filename",
+            "example": "document.pdf"
+          },
+          "base64": {
+            "type": "string",
+            "description": "Base64 encoded file data",
+            "example": "JVBERi0xLjQKJeLjz9MK...=="
+          }
+        }
+      },
+      "ContextText": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text content to be added to the vector store"
+          }
+        }
+      },
+      "ContextUrl": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to fetch content from",
+            "example": "https://example.com/article"
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "required": ["data", "success"],
+        "description": "Generic API response wrapper. Use endpoint-specific response schemas for exact data types.",
+        "properties": {
+          "data": {
+            "description": "The data to be returned (type varies by endpoint)"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always true.",
+            "example": true
+          }
+        }
+      },
+      "SendMessageResponse": {
+        "type": "object",
+        "required": ["data", "success"],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AgentMessage"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always true.",
+            "example": true
+          }
+        }
+      },
+      "GetChatHistoryResponse": {
+        "type": "object",
+        "required": ["data", "success"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Array of all chat messages in the user's history",
+            "items": {
+              "$ref": "#/components/schemas/AgentMessage"
+            }
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always true.",
+            "example": true
+          }
+        }
+      },
+      "AddContextTextResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always true.",
+            "example": true
+          }
+        }
+      },
+      "AddContextFromUrlResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always true.",
+            "example": true
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["success", "error"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful. Always false.",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "description": "The error message",
+            "example": "Internal Server Error"
+          }
+        }
+      }
+    }
+  }
+}
