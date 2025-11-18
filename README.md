@@ -76,14 +76,20 @@ To create your own Agent Capsule in Code Capsules with this functionaity:
 To set up Google Calendar integration:
 
 1. Follow the instructions [here](https://developers.google.com/workspace/calendar/api/quickstart/js) to set up your Google cloud project and enable the Google Calendar API. Ensure to keep your Web Application client secret and key somewhere safe
-2. Edit your Agent Capsule environment variables and add the following, replacing the values where necessary:
+2. Ensure that you have set up a redirect URI under your new [Client](https://console.cloud.google.com/auth/clients) in the Google Cloud Console. These can be found under the **Authorised redirect URIs** header. The redirect URI should be as follows: {your_agent_capsule_public_url}/api/calendar/auth/callback. For example 'https://agent-capsule-123.ovh-test.ccdns.co/api/calendar/auth/callback'
+3. For testing purposes, be sure to add a valid email under the [Audience](https://console.cloud.google.com/auth/audience) of your auth. This will be the Google Calendar email account
+3. Edit your Agent Capsule environment variables and add the following, replacing the values where necessary:
 
 ```bash
 GOOGLE_CALENDAR_CLIENT_ID=your_client_id
 GOOGLE_CALENDAR_CLIENT_SECRET=your_client_secret
 ```
 
-3. Use the 'Chat' tab to talk with your new agent
+4. Use the 'Chat' tab to talk with your new agent. 
+  - For testing purposes, an "authorisation" tool exists for help with authorising access to Google Calender
+  - To initiate, ask your agent "Please can I authorise my calendar". It will return with a URL
+  - After authorising, you can ask to "add an event" or "get a list of events from dates x to y", which will use the necessary [tools](#agent-tools)
+5. It is important to note that this codebases uses a very simple in-memory cache for the Google Calendar access tokens. Production areas should use a form of [persistent storage](https://docs.codecapsules.io/database)
 
 ## Vector Store Setup (Redis)
 
