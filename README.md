@@ -116,7 +116,7 @@ REDIS_URL=your_copied_connection_string
 >
 > **Please note:** Agent Capsule templates have been built with the capabilities of using either a Redis or in-memory vector store. When using the in-memory option (i.e. no Redis Capsule is linked), it is recommended to scale the Agent Capsule to the following in order to ensure optimal performance:
 >
-> - CPU 28%
+> - CPU 25%
 > - Memory 1GB
 > - Replicas 1
 >
